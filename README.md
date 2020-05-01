@@ -1,4 +1,5 @@
-## What is ansible-fail2ban? [![Build Status](https://secure.travis-ci.org/nickjj/ansible-fail2ban.png)](http://travis-ci.org/nickjj/ansible-fail2ban)
+[![Build Status](https://travis-ci.org/viasite-ansible/ansible-role-fail2ban.svg?branch=master)](https://travis-ci.org/viasite-ansible/ansible-role-fail2ban)
+## What is ansible-fail2ban?
 
 It is an [ansible](http://www.ansible.com/home) role to install and configure fail2ban.
 

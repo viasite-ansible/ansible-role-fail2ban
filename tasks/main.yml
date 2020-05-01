@@ -14,3 +14,4 @@
 
 - name: ensure fail2ban starts on a fresh reboot
   service: name=fail2ban state=started enabled=yes
+  changed_when: false
