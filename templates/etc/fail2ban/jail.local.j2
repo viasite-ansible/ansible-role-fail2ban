@@ -42,6 +42,15 @@ action = %({{ service.action }})s
 {% if service.banaction is defined %}
 banaction = {{ service.banaction }}
 {% endif %}
+{% if service.failregex is defined %}
+failregex = {{ service.failregex }}
+{% endif %}
+{% if service.bantime is defined %}
+bantime = {{ service.bantime }}
+{% endif %}
+{% if service.maxmatches is defined %}
+maxmatches = {{ service.maxmatches }}
+{% endif %}
 
 {% endfor %}
 {% endif %}
