@@ -1,0 +1,34 @@
+#!/bin/bash
+# https://developers.google.com/search/docs/crawling-indexing/verifying-googlebot
+# https://forum.cleavr.io/t/ignore-google-bots-on-fail2ban/306
+
+log="${LOG:-/var/log/fail2ban.log}"
+echo "log: $log"
+
+check_jail() {
+  jail="$1"
+  echo -e "\n\njail: $jail"
+  lines="$(cat "$log" | grep "${jail}] Ban " | awk '{ print $NF }' | sort | uniq -c | sort -n)"
+  # IFS=$'\n'
+  while IFS= read -r line; do
+    # echo "line:$line"
+    count=$(echo $line | awk '{ print $1 }')
+    ip=$(echo $line | awk '{ print $2 }')
+    host=$(host -W 5 $ip | awk '{ print $NF }')
+    color="\e[0m"
+    isgood=$(echo $host | grep -E '{{ fail2ban_hosts_whitelist | union(fail2ban_hosts_whitelist_extras) | map('replace', '.', '\.') | join('|') }}' | wc -l)
+    if [ $isgood -eq 1 ]; then
+      color="\e[31m"
+    else
+      iswarn=$(echo $host | grep -E '{{ fail2ban_hosts_warnlist | union(fail2ban_hosts_warnlist_extras) | map('replace', '.', '\.') | join('|') }}' | wc -l)
+      if [ $iswarn -eq 1 ]; then
+        color="\e[33m"
+      fi
+    fi
+    echo -e "$color$(printf "%-16s" $ip)\t$(printf "%-3s" $count) times\t$host\e[0m"
+  done < <(printf '%s' "$lines")
+}
+
+{% for service in fail2ban_services_extras | union(fail2ban_services) %}
+check_jail {{ service.name }}
+{% endfor %}

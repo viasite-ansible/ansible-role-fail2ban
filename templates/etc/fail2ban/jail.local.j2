@@ -1,7 +1,9 @@
 [DEFAULT]
 
 ignoreip = {{ fail2ban_ignoreip }}
+ignorecommand = /usr/local/bin/ignore_ip_check.sh <ip>
 bantime  = {{ fail2ban_bantime }}
+bantime.overalljails = {{ fail2ban_bantime_overalljails }}
 maxretry = {{ fail2ban_maxretry }}
 
 backend = {{fail2ban_backend}}
@@ -23,11 +25,13 @@ action_mwl = %(banaction)s[name=%(__name__)s, port="%(port)s", protocol="%(proto
 action = %({{ fail2ban_action }})s
 
 {% if fail2ban_services is iterable %}
-{% for service in fail2ban_services %}
+{% for service in fail2ban_services | union(fail2ban_services_extras) | unique %}
 [{{ service.name }}]
 
 enabled = {{ service.enabled|default("true") }}
+{% if service.port is defined %}
 port = {{ service.port }}
+{% endif %}
 filter = {{ service.filter }}
 logpath = {{ service.logpath }}
 {% if service.maxretry is defined %}
@@ -37,7 +41,7 @@ maxretry = {{ service.maxretry }}
 protocol = {{ service.protocol }}
 {% endif %}
 {% if service.action is defined %}
-action = %({{ service.action }})s
+action = {{ service.action }}
 {% endif %}
 {% if service.banaction is defined %}
 banaction = {{ service.banaction }}
@@ -47,6 +51,15 @@ failregex = {{ service.failregex }}
 {% endif %}
 {% if service.bantime is defined %}
 bantime = {{ service.bantime }}
+{% endif %}
+{% if service.bantime_increment is defined %}
+bantime.increment = {{ service.bantime_increment }}
+{% endif %}
+{% if service.bantime_multipliers is defined %}
+bantime.multipliers = {{ service.bantime_multipliers }}
+{% endif %}
+{% if service.findtime is defined %}
+findtime = {{ service.findtime }}
 {% endif %}
 {% if service.maxmatches is defined %}
 maxmatches = {{ service.maxmatches }}

@@ -1,0 +1,40 @@
+#!/bin/bash
+set -eu
+
+ips_url="${IPS_URL:-"https://lists.ipthreat.net/file/ipthreat-lists/threat/threat-100.txt.gz"}"
+ips_path_temp="/tmp/$(basename $ips_url).txt"
+ips_cache_valid=3600
+logs_list="${LOGS:-"/var/log/fail2ban.log"}"
+
+# download ips_url, extract to ips_path_temp if not exists or not modified for ips_cache_valid seconds
+if [ ! -f $ips_path_temp ] || [ $(find $ips_path_temp -mmin +$ips_cache_valid) ]; then
+  echo "download $ips_url to $ips_path_temp"
+  curl -s $ips_url | gunzip > $ips_path_temp
+fi
+
+echo "ips_list: $(basename $ips_url), size: $(cat $ips_path_temp | wc -l)"
+# read ips_path_temp into ips_list, line format: "1.2.3.4 # comment"
+ips_list=($(cat $ips_path_temp | grep -v '^#' | awk '{print $1}'))
+
+# loop through logs_list
+for log in ${logs_list[@]}; do
+  log_found_ips=0
+  # loop through ips_list
+  echo "checking log: $log:"
+  for ip in ${ips_list[@]}; do
+    # count occurrences of ip in log
+    # echo "ip: $ip"
+    count=$(grep -c -m 1 $ip $log || true)
+    # echo "count: $count"
+    # if count > 0, print log and ip
+    if [ "$count" -gt 0 ]; then
+      # log_found_ips + 1
+      log_found_ips=$((log_found_ips+1))
+      # echo "$log: $ip ($count)"
+      echo -n "$log_found_ips"
+    else
+      echo -n "."
+    fi
+  done
+  echo -e "\nlog: $log, log_found_ips: $log_found_ips"
+done

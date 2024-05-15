@@ -1,0 +1,29 @@
+#!/bin/bash
+# https://developers.google.com/search/docs/crawling-indexing/verifying-googlebot
+# https://forum.cleavr.io/t/ignore-google-bots-on-fail2ban/306
+
+check_jail() {
+  jail="$1"
+  echo -e "\n\njail: $jail"
+  ips_list=($(fail2ban-client status $jail | grep 'Banned IP list' | cut -d':' -f2- | awk '{$1=$1};1'))
+  echo "ips: $ips_list"
+  for ip in ${ips_list[@]}; do
+    host=$(host $ip | awk '{ print $NF }')
+    # match yandex|google
+    color="\e[0m"
+    isgood=$(echo $host | grep -E '{{ fail2ban_hosts_whitelist | union(fail2ban_hosts_whitelist_extras) | map('replace', '.', '\.') | join('|') }}' | wc -l)
+    if [ $isgood -eq 1 ]; then
+      color="\e[31m"
+    else
+      iswarn=$(echo $host | grep -E '{{ fail2ban_hosts_warnlist | union(fail2ban_hosts_warnlist_extras) | map('replace', '.', '\.') | join('|') }}' | wc -l)
+      if [ $iswarn -eq 1 ]; then
+        color="\e[33m"
+      fi
+    fi
+    echo -e "$color$(printf "%-16s" $ip)\t$host\e[0m"
+  done
+}
+
+{% for service in fail2ban_services_extras | union(fail2ban_services) %}
+check_jail {{ service.name }}
+{% endfor %}

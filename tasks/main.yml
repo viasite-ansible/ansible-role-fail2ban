@@ -3,15 +3,54 @@
   apt: pkg=fail2ban state=present update_cache=true cache_valid_time={{ apt_cache_valid_time }}
   notify:
     - restart fail2ban
+  when: not fail2ban_git_version
+  tags: [fail2ban, install]
+
+- name: clone fail2ban from git
+  git:
+    repo: https://github.com/fail2ban/fail2ban.git
+    dest: "/tmp/fail2ban"
+    version: "{{ fail2ban_git_version }}"
+    force: yes
+  when: fail2ban_git_version
+  register: fail2ban_git_clone
+  tags: [fail2ban, install]
+
+- name: install clonned fail2ban
+  command: "python setup.py install"
+  args:
+    chdir: "/tmp/fail2ban"
+  notify:
+    - restart fail2ban
+  when: fail2ban_git_clone is changed
+  tags: [fail2ban, install]
+
+- name: add scripts
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "0755"
+  with_items:
+    - { src: "ignore_ip_check.sh.j2", dest: "/usr/local/bin/ignore_ip_check.sh" }
+    - { src: "fail2ban-check-banned.j2", dest: "/usr/local/bin/fail2ban-check-banned" }
+    - { src: "fail2ban-check-current-banned.j2", dest: "/usr/local/bin/fail2ban-check-current-banned" }
+    - { src: "ipthreat-check.j2", dest: "/usr/local/bin/ipthreat-check" }
+  tags: [fail2ban, configure, scripts]
 
 - name: ensure fail2ban is configured
   template: src={{ item }}.j2 dest=/{{ item }}
   with_items:
     - etc/fail2ban/jail.local
     - etc/fail2ban/fail2ban.local
+    - etc/fail2ban/filter.d/nginx-limit-req.conf
+    - etc/fail2ban/filter.d/nginx-limit-req-perip_server.conf
+    #- etc/fail2ban/jail.d/nginx-limit-req.conf
+    #- etc/fail2ban/jail.d/nginx-limit-req-highload.conf
   notify:
     - restart fail2ban
+  tags: [fail2ban, configure]
 
 - name: ensure fail2ban starts on a fresh reboot
   service: name=fail2ban state=started enabled=yes
   changed_when: false
+  tags: [fail2ban, install]

@@ -1,10 +1,11 @@
 ---
-fail2ban_loglevel: 3
+fail2ban_loglevel: INFO
 fail2ban_logtarget: /var/log/fail2ban.log
 fail2ban_socket: /var/run/fail2ban/fail2ban.sock
 
 fail2ban_ignoreip: 127.0.0.1/8
 fail2ban_bantime: 600
+fail2ban_bantime_overalljails: "true"
 fail2ban_maxretry: 6
 
 fail2ban_backend: polling
@@ -17,10 +18,30 @@ fail2ban_chain: INPUT
 
 fail2ban_action: action_
 
+fail2ban_git_version:
+
+fail2ban_hosts_whitelist:
+  - google.com.
+  - googlebot.com.
+  - googleusercontent.com.
+  - opera.com.
+  - operanewsapp.com.
+  - yandex.com.
+
+fail2ban_hosts_whitelist_extras: []
+
+fail2ban_hosts_warnlist: []
+fail2ban_hosts_warnlist_extras: []
+
 fail2ban_services:
   - name: ssh
     port: ssh
     filter: sshd
     logpath: /var/log/auth.log
+    maxretry: 4
+    bantime_increment: "true"
+    bantime_multipliers: 1 4 16 -1
+
+fail2ban_services_extras: []
 
 apt_cache_valid_time: 86400
