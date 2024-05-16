@@ -16,11 +16,11 @@ check_jail() {
     ip=$(echo $line | awk '{ print $2 }')
     host=$(host -W 5 $ip | awk '{ print $NF }')
     color="\e[0m"
-    isgood=$(echo $host | grep -E '{{ fail2ban_hosts_whitelist | union(fail2ban_hosts_whitelist_extras) | map('replace', '.', '\.') | join('|') }}' | wc -l)
+    isgood=$(echo $host | grep -E '{{ fail2ban_hosts_whitelist | union(fail2ban_hosts_whitelist_extras) | sort | map('replace', '.', '\.') | join('|') }}' | wc -l)
     if [ $isgood -eq 1 ]; then
       color="\e[31m"
     else
-      iswarn=$(echo $host | grep -E '{{ fail2ban_hosts_warnlist | union(fail2ban_hosts_warnlist_extras) | map('replace', '.', '\.') | join('|') }}' | wc -l)
+      iswarn=$(echo $host | grep -E '{{ fail2ban_hosts_warnlist | union(fail2ban_hosts_warnlist_extras) | sort | map('replace', '.', '\.') | join('|') }}' | wc -l)
       if [ $iswarn -eq 1 ]; then
         color="\e[33m"
       fi

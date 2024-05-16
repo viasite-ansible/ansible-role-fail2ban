@@ -4,5 +4,5 @@
 
 IP="$1"
 HOSTRESULT="$(host -W 2 ${IP})"
-REGEX='.*({{ fail2ban_hosts_whitelist | union(fail2ban_hosts_whitelist_extras) | map('replace', '.', '\.') | join('|') }})'
+REGEX='.*({{ fail2ban_hosts_whitelist | union(fail2ban_hosts_whitelist_extras) | sort | map('replace', '.', '\.') | join('|') }})'
 if [[ "$HOSTRESULT" =~ $REGEX ]]; then exit 0; else exit 1; fi
